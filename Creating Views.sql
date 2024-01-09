@@ -57,30 +57,7 @@ FROM
 	GROUP BY
 		year
 
-	UNION ALL
-
-	SELECT
-		year,
-		MAX(MAX_points),
-		MAX(n_races) AS Races,
-		"Sprint" as type ,
-		CASE
-		WHEN year = 2014 THEN (25 *(MAX(n_races)-1)) +Max(MAX_points)
-		ELSE MAX(MAX_points)*MAX(n_races) END AS AvailablePoints
-	FROM(
-		SELECT
-			r.year,
-			MAX(sre.points) as MAX_Points ,
-			COUNT(*) OVER (PARTITION BY r.year) AS n_races
-		FROM 
-			sprintResults sre
-		JOIN
-			races r ON sre.raceId=r.raceId
-		GROUP BY 
-			r.year, r.raceId
-		) t2
-	GROUP BY
-		year
+	
 	ORDER BY 
 		YEAR DESC,
 		Type) t3
@@ -106,6 +83,19 @@ JOIN
 	GROUP BY raceId,driverId)t3  ON t3.raceId=t1.raceId
 ORDER BY 
 	year DESC
+;
+-- times between a bad pitstops query badstop/totalStops
+SELECT
+    r.year,
+    r.name AS race,
+    c.name AS Team,
+    pits.milliseconds as PitStop
+FROM pitStops pits
+JOIN races r ON r.raceId=pits.raceId
+JOIN (SELECT DISTINCT raceid,constructorId,driverId FROM Results) re ON
+re.raceId=pits.raceId AND pits.driverId=re.driverId
+JOIN constructors c ON c.constructorId=re.constructorId
+ORDER BY r.year DESC, r.round
 
 
 
